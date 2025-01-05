@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Распознавание текста</title>
+  <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogItCg0LDRgdGB0LvQsNCy0LvQtdC90LjQtSDRgtC10YHRgtC+0LIiLAogICJzaG9ydF9uYW1lIjogItCU0L7RgdGC0LggUFdBIiwKICAic3RhcnRfdXJsIjogIi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiM0YTAwZTAiLAogICJ0aGVtZV9jb2xvciI6ICIjNGEwMGUwIiwKICAiZGVzY3JpcHRpb24iOiAi0J/RgNC+0LLQtdGA0LjRgtGMINC90LAg0YDQsNGB0YHQu9Cw0LLQu9C10L3QuNC1INGC0LXRgdGC0L7QsiDQvdCw0YfQsNC70YzQvdC+0YHRgtC4LiIsCiAgImljb25zIjogWwogICAgewogICAgICAic3JjIjogImljb24tMTkyeDE5Mi5wbmciLAogICAgICAic2l6ZXMiOiAiMTkyeDE5MiIsCiAgICAgICJ0eXBlIjogImltYWdlL3BuZyIKICAgIH0sCiAgICB7CiAgICAgICJzcmMiOiAiaWNvbi01MTJ4NTEyLnBuZyIsCiAgICAgICJzaXplcyI6ICI1MTJ4NTEyIiwKICAgICAgInR5cGUiOiAiaW1hZ2UvcG5nIgogICAgfQogIF0KfQ==">
+  <meta name="theme-color" content="#4a00e0">
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+  <style>
+    html, body, #app {
+      height: 100%;
+      margin: 0;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    #app {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #8e2de2, #4a00e0);
+    }
+    .container {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    textarea {
+      min-height: 340px;
+      width: 100%;
+      font-size: 16px;
+      background-color: #f9fafb;
+      border: 2px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 1rem;
+      transition: border-color 0.3s ease;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    textarea:focus {
+      border-color: #6366f1;
+      outline: none;
+    }
+    .slider {
+      width: 100%;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 8px;
+      background: #e5e7eb;
+      border-radius: 4px;
+      outline: none;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+    .slider:hover {
+      opacity: 1;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      background: #6366f1;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: #6366f1;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    .btn {
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    @keyframes wave {
+      0% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.2); opacity: 0.7; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .wave-animation {
+      animation: wave 1.5s infinite;
+    }
+    .language-dropdown {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      z-index: 10;
+    }
+    .language-dropdown button {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      padding: 0.5rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    .language-dropdown button:hover {
+      background: rgba(255, 255, 255, 1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .language-dropdown .dropdown-content {
+      display: none;
+      position: absolute;
+      right: 0;
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #e5e7eb;
+      border-radius: 0.5rem;
+      margin-top: 0.5rem;
+      min-width: 120px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .language-dropdown .dropdown-content.show {
+      display: block;
+    }
+    .language-dropdown .dropdown-content button {
+      width: 100%;
+      text-align: left;
+      padding: 0.5rem 1rem;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+    .language-dropdown .dropdown-content button:hover {
+      background: rgba(0, 0, 0, 0.05);
+    }
+    :fullscreen {
+      background-color: #4a00e0;
+    }
+    :-webkit-full-screen {
+      background-color: #4a00e0;
+    }
+    :-moz-full-screen {
+      background-color: #4a00e0;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="container bg-white rounded-lg shadow-2xl p-8">
+      <div class="language-dropdown">
+        <button id="languageToggle">
+          <span>Русский</span>
+          <i class="fas fa-chevron-down"></i>
+        </button>
+        <div id="languageDropdown" class="dropdown-content">
+          <button data-lang="ru-RU">Русский</button>
+          <button data-lang="en-US">Английский</button>
+          <button data-lang="be-BY">Белорусский</button>
+        </div>
+      </div>
+      <h1 class="text-3xl font-bold text-center text-gray-800 mb-6">Распознавание текста</h1>
+      <div class="space-y-4 w-full">
+        <div id="output" class="bg-gray-100 p-4 rounded-lg text-gray-700 w-full">
+          <textarea id="recognizedText" class="w-full p-2 rounded-lg resize-none"></textarea>
+        </div>
+        <button id="toggleRecognitionBtn" class="w-full bg-blue-500 text-white py-3 px-6 rounded-lg hover:bg-blue-600 transition duration-300 btn">
+          <i class="fas fa-microphone wave-animation"></i> Начать распознавание
+        </button>
+        <div id="sensitivityControl" class="w-full">
+          <label for="sensitivitySlider" class="block text-sm font-medium text-gray-700">
+            Чувствительность окончания фразы (секунды):
+            <span id="sensitivityValue">2</span>
+          </label>
+          <input
+            type="range"
+            id="sensitivitySlider"
+            min="0.2"
+            max="4"
+            step="0.1"
+            value="2"
+            class="slider"
+          />
+        </div>
+        <button id="copyBtn" class="w-full bg-purple-500 text-white py-3 px-6 rounded-lg hover:bg-purple-600 transition duration-300 btn">
+          <i class="fas fa-copy"></i> Скопировать текст
+        </button>
+        <button id="fullscreenBtn" class="w-full bg-green-500 text-white py-3 px-6 rounded-lg hover:bg-green-600 transition duration-300 btn">
+          <i class="fas fa-expand"></i> Полноэкранный режим
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then((registration) => {
+            console.log('Service Worker зарегистрирован:', registration);
+          })
+          .catch((error) => {
+            console.log('Ошибка регистрации Service Worker:', error);
+          });
+      });
+    }
+
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+    fullscreenBtn.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().catch((err) => {
+          console.error('Ошибка при переходе в полноэкранный режим:', err);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    });
+    document.addEventListener('fullscreenchange', () => {
+      if (document.fullscreenElement) {
+        fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i> Выйти из полноэкранного режима';
+      } else {
+        fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i> Полноэкранный режим';
+      }
+    });
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Ваш браузер не поддерживает распознавание речи. Пожалуйста, используйте Chrome или Edge.");
+    } else {
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'ru-RU';
+      recognition.interimResults = false;
+      recognition.continuous = true;
+
+      const toggleRecognitionBtn = document.getElementById('toggleRecognitionBtn');
+      const sensitivityControl = document.getElementById('sensitivityControl');
+      const sensitivitySlider = document.getElementById('sensitivitySlider');
+      const sensitivityValue = document.getElementById('sensitivityValue');
+      const outputDiv = document.getElementById('output');
+      const recognizedText = document.getElementById('recognizedText');
+      const copyBtn = document.getElementById('copyBtn');
+      const languageToggle = document.getElementById('languageToggle');
+      const languageDropdown = document.getElementById('languageDropdown');
+
+      let fullTranscript = "";
+      let isRecognizing = false;
+      let pauseTimer = null;
+      let pauseDuration = 2000;
+
+      sensitivitySlider.addEventListener('input', () => {
+        pauseDuration = sensitivitySlider.value * 1000;
+        sensitivityValue.textContent = sensitivitySlider.value;
+      });
+
+      toggleRecognitionBtn.addEventListener('click', () => {
+        if (!isRecognizing) {
+          recognition.start();
+          isRecognizing = true;
+          toggleRecognitionBtn.innerHTML = '<i class="fas fa-pause"></i> Остановить распознавание';
+          outputDiv.classList.remove('hidden');
+          recognizedText.readOnly = false;
+        } else {
+          recognition.stop();
+          isRecognizing = false;
+          toggleRecognitionBtn.innerHTML = '<i class="fas fa-microphone wave-animation"></i> Продолжить распознавание';
+        }
+      });
+
+      recognition.onresult = (event) => {
+        clearTimeout(pauseTimer);
+        const transcript = event.results[event.results.length - 1][0].transcript.trim();
+        let formattedTranscript = transcript;
+        if (fullTranscript.endsWith(". ") || fullTranscript.length === 0) {
+          formattedTranscript = transcript.charAt(0).toUpperCase() + transcript.slice(1);
+        }
+        if (!fullTranscript.endsWith(formattedTranscript)) {
+          fullTranscript += formattedTranscript + " ";
+          recognizedText.value = fullTranscript;
+        }
+        pauseTimer = setTimeout(() => {
+          if (fullTranscript.trim() !== "" && !fullTranscript.endsWith(". ")) {
+            fullTranscript = fullTranscript.trim() + ". ";
+            recognizedText.value = fullTranscript;
+          }
+        }, pauseDuration);
+      };
+
+      recognition.onerror = (event) => {
+        console.error("Ошибка распознавания:", event.error);
+        if (isRecognizing) {
+          recognition.start();
+        }
+      };
+
+      recognition.onend = () => {
+        if (isRecognizing) {
+          recognition.start();
+        }
+      };
+
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(recognizedText.value);
+      });
+
+      recognizedText.addEventListener('click', () => {
+        recognizedText.focus();
+      });
+
+      recognizedText.addEventListener('input', () => {
+        fullTranscript = recognizedText.value;
+      });
+
+      languageToggle.addEventListener('click', () => {
+        languageDropdown.classList.toggle('show');
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!languageToggle.contains(event.target) && !languageDropdown.contains(event.target)) {
+          languageDropdown.classList.remove('show');
+        }
+      });
+
+      document.querySelectorAll('#languageDropdown button').forEach((button) => {
+        button.addEventListener('click', () => {
+          const lang = button.getAttribute('data-lang');
+          recognition.lang = lang;
+          languageToggle.querySelector('span').textContent = button.textContent.trim();
+          languageDropdown.classList.remove('show');
+        });
+      });
+    }
+  </script>
+
+  <script>
+    // Service Worker (встроенный в HTML)
+    if ('serviceWorker' in navigator) {
+      const swScript = `
+        const CACHE_NAME = 'text-recognition-v1';
+        const ASSETS = [
+          '/',
+          '/index.html',
+          '/styles.css',
+          '/script.js',
+          '/icon-192x192.png',
+          '/icon-512x512.png'
+        ];
+
+        self.addEventListener('install', (event) => {
+          event.waitUntil(
+            caches.open(CACHE_NAME)
+              .then((cache) => cache.addAll(ASSETS))
+          );
+        });
+
+        self.addEventListener('fetch', (event) => {
+          event.respondWith(
+            caches.match(event.request)
+              .then((response) => response || fetch(event.request))
+          );
+        });
+      `;
+
+      const blob = new Blob([swScript], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+
+      navigator.serviceWorker.register(swUrl)
+        .then((registration) => {
+          console.log('Service Worker зарегистрирован:', registration);
+        })
+        .catch((error) => {
+          console.log('Ошибка регистрации Service Worker:', error);
+        });
+    }
+  </script>
+</body>
+</html>
