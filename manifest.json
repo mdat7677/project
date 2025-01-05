@@ -1,7 +1,7 @@
 {
   "name": "Распознавание текста",
   "short_name": "Текст PWA",
-  "start_url": "/",
+  "start_url": "/project",
   "display": "standalone",
   "background_color": "#4a00e0",
   "theme_color": "#4a00e0",
